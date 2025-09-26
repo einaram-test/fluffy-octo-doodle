@@ -133,13 +133,28 @@
           symbol = now.data.next_6_hours.summary.symbol_code;
         }
 
-        // Set icon from met.no symbol (SVG)
-        if(symbol) {
+        // Set icon from met.no symbol (SVG) with fallback
+        const img = document.getElementById('weather-icon');
+        if (symbol) {
           const iconUrl = `https://api.met.no/images/weathericons/svg/${symbol}.svg`;
-          const img = document.getElementById('weather-icon');
-          img.src = iconUrl;
+          // Validate icon exists by trying to fetch the SVG (HEAD request)
+          fetch(iconUrl, { method: 'HEAD' }).then(iconResp => {
+            if (iconResp.ok) {
+              img.src = iconUrl;
+            } else {
+              img.src = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Weather_icon_-_sunny.svg'; // fallback icon
+            }
+            img.style.display = "block";
+            img.alt = summary;
+          }).catch(() => {
+            img.src = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Weather_icon_-_sunny.svg'; // fallback on error
+            img.style.display = "block";
+            img.alt = "Weather";
+          });
+        } else {
+          img.src = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Weather_icon_-_sunny.svg'; // fallback
           img.style.display = "block";
-          img.alt = summary;
+          img.alt = "Weather";
         }
 
         document.getElementById('temp').textContent = `${Math.round(temp)} °C`;
@@ -148,6 +163,9 @@
         document.getElementById('humidity').textContent = humidity;
       } catch (e) {
         document.getElementById('desc').textContent = 'Failed to load weather data.';
+        document.getElementById('weather-icon').src = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Weather_icon_-_sunny.svg';
+        document.getElementById('weather-icon').style.display = "block";
+        document.getElementById('weather-icon').alt = "Weather";
       }
     }
     fetchWeather();
